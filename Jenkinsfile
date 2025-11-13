@@ -9,6 +9,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo "📦 Checking out source code..."
@@ -18,8 +19,12 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                echo "⚙️ Building project with Maven..."
-                sh 'mvn clean package -DskipTests'
+                echo "⚙️ Building project using Jenkins Maven tool..."
+                script {
+                    // Use the Maven tool configured in Jenkins (Manage Jenkins → Global Tool Configuration)
+                    def mvnHome = tool name: 'maven', type: 'maven'
+                    sh "${mvnHome}/bin/mvn clean package -DskipTests"
+                }
             }
         }
 
@@ -33,7 +38,6 @@ pipeline {
         stage('Run Container') {
             steps {
                 echo "🚀 Running container from image..."
-                // Stop and remove old container if it exists
                 sh """
                 docker ps -q --filter name=${CONTAINER_NAME} | grep -q . && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true
                 docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${IMAGE_NAME}:latest
