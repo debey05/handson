@@ -1,11 +1,15 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'maven'     // <-- This is your builder, name must match Jenkins tool name
+    }
+
     environment {
         APP_NAME = "demo-app"
         IMAGE_NAME = "demo-app-image"
         CONTAINER_NAME = "demo-app-container"
-        DOCKERHUB_USER = "your-dockerhub-username" // optional if pushing image
+        DOCKERHUB_USER = "your-dockerhub-username"
     }
 
     stages {
@@ -19,12 +23,8 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                echo "⚙️ Building project using Jenkins Maven tool..."
-                script {
-                    // Use the Maven tool configured in Jenkins (Manage Jenkins → Global Tool Configuration)
-                    def mvnHome = tool name: 'maven', type: 'maven'
-                    sh "${mvnHome}/bin/mvn clean package -DskipTests"
-                }
+                echo "⚙️ Building project using Maven builder..."
+                sh "mvn clean package -DskipTests"
             }
         }
 
@@ -37,7 +37,7 @@ pipeline {
 
         stage('Run Container') {
             steps {
-                echo "🚀 Running container from image..."
+                echo "🚀 Running container..."
                 sh """
                 docker ps -q --filter name=${CONTAINER_NAME} | grep -q . && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true
                 docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${IMAGE_NAME}:latest
@@ -48,11 +48,11 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed successfully! Application is running on port 8080."
+            echo "✅ Pipeline completed successfully! App running on port 8080."
             sh 'docker ps'
         }
         failure {
-            echo "❌ Pipeline failed. Please check logs for details."
+            echo "❌ Pipeline failed. Check logs!"
         }
     }
 }
