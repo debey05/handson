@@ -31,6 +31,39 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo "🐳 Building Docker image..."
+
+                // ---------------------------
+                // 🚀 Install Docker + Fix Permissions
+                // ---------------------------
+                sh '''
+                    echo "🔧 Checking if Docker is installed..."
+
+                    if ! command -v docker &> /dev/null; then
+                        echo "🐳 Docker not found. Installing..."
+                        sudo apt update -y
+                        sudo apt install docker.io -y
+                        sudo systemctl enable docker
+                        sudo systemctl start docker
+                    else
+                        echo "✔ Docker already installed."
+                    fi
+
+                    echo "🔑 Adding Jenkins user to docker group..."
+                    sudo usermod -aG docker jenkins || true
+
+                    echo "🔧 Fixing Docker socket permissions..."
+                    sudo chmod 666 /var/run/docker.sock || true
+
+                    echo "🔄 Restarting Docker service..."
+                    sudo systemctl restart docker || true
+
+                    echo "🧪 Testing Docker..."
+                    docker --version
+                '''
+
+                // ---------------------------
+                // 🏗 Build Docker image
+                // ---------------------------
                 sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
             }
         }
