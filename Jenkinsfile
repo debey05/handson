@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'maven'     // <-- This is your builder, name must match Jenkins tool name
+        maven 'maven'
     }
 
     environment {
@@ -23,7 +23,7 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                echo "⚙️ Building project using Maven builder..."
+                echo "⚙️ Building project using Maven..."
                 sh "mvn clean package -DskipTests"
             }
         }
@@ -32,12 +32,8 @@ pipeline {
             steps {
                 echo "🐳 Building Docker image..."
 
-                // ---------------------------
-                // 🚀 Install Docker + Fix Permissions
-                // ---------------------------
                 sh '''
                     echo "🔧 Checking if Docker is installed..."
-
                     if ! command -v docker &> /dev/null; then
                         echo "🐳 Docker not found. Installing..."
                         sudo apt update -y
@@ -54,17 +50,30 @@ pipeline {
                     echo "🔧 Fixing Docker socket permissions..."
                     sudo chmod 666 /var/run/docker.sock || true
 
-                    echo "🔄 Restarting Docker service..."
+                    echo "🔄 Restarting Docker..."
                     sudo systemctl restart docker || true
-
-                    echo "🧪 Testing Docker..."
-                    docker --version
                 '''
 
-                // ---------------------------
-                // 🏗 Build Docker image
-                // ---------------------------
                 sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
+            }
+        }
+
+        stage('Push Image to DockerHub') {
+            steps {
+                echo "📤 Pushing image to Docker Hub..."
+
+                withCredentials([string(credentialsId: 'dockerhub_token', variable: 'DOCKER_TOKEN')]) {
+                    sh """
+                    echo "🔐 Logging into Docker Hub..."
+                    echo "${DOCKER_TOKEN}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
+                    
+                    echo "🏷 Tagging image..."
+                    docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKERHUB_USER}/${IMAGE_NAME}:${BUILD_NUMBER}
+
+                    echo "📤 Pushing image..."
+                    docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:${BUILD_NUMBER}
+                    """
+                }
             }
         }
 
@@ -72,7 +81,9 @@ pipeline {
             steps {
                 echo "🚀 Running container..."
                 sh """
-                docker ps -q --filter name=${CONTAINER_NAME} | grep -q . && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true
+                docker ps -q --filter name=${CONTAINER_NAME} | grep -q . && \
+                docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true
+
                 docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${IMAGE_NAME}:${BUILD_NUMBER}
                 """
             }
