@@ -68,7 +68,7 @@ pipeline {
                     echo "${DOCKER_TOKEN}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
                     
                     echo "🏷 Tagging image..."
-                    docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKERHUB_USER}/${IMAGE_NAME}:${BUILD_NUMBER}
+                    # docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKERHUB_USER}/${IMAGE_NAME}:${BUILD_NUMBER}
 
                     echo "📤 Pushing image..."
                     docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:${BUILD_NUMBER}
