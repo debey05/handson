@@ -71,7 +71,7 @@ pipeline {
                     # docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKERHUB_USER}/${IMAGE_NAME}:${BUILD_NUMBER}
 
                     echo "📤 Pushing image..."
-                    docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:${BUILD_NUMBER}
+                    docker push ${IMAGE_NAME}:${BUILD_NUMBER}
                     """
                 }
             }
