@@ -67,9 +67,6 @@ pipeline {
                     echo "🔐 Logging into Docker Hub..."
                     echo "${DOCKER_TOKEN}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
                     
-                    echo "🏷 Tagging image..."
-                    # docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKERHUB_USER}/${IMAGE_NAME}:${BUILD_NUMBER}
-
                     echo "📤 Pushing image..."
                     docker push ${IMAGE_NAME}:${BUILD_NUMBER}
                     """
@@ -81,9 +78,15 @@ pipeline {
             steps {
                 echo "🚀 Running container..."
                 sh """
-                docker ps -q --filter name=${CONTAINER_NAME} | grep -q . && \
-                docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true
+                echo "🛑 Stopping and removing any existing container..."
+                if [ \$(docker ps -aq -f name=${CONTAINER_NAME}) ]; then
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm ${CONTAINER_NAME} || true
+                else
+                    echo "No existing container found. Continuing..."
+                fi
 
+                echo "🚀 Starting new container..."
                 docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${IMAGE_NAME}:${BUILD_NUMBER}
                 """
             }
