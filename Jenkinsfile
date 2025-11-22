@@ -5,6 +5,15 @@ pipeline {
         maven 'maven'
     }
 
+    parameters {
+        string(
+            name: 'port',
+            defaultValue: '',
+            description: 'container should use this port',
+            trim: true
+        )
+    }
+
     environment {
         APP_NAME = "jenkinsdemo-app"
         IMAGE_NAME = "deborahdel/jenkinsbuild2"
@@ -30,6 +39,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
+
                 echo "🐳 Building Docker image..."
 
                 sh '''
@@ -64,11 +74,11 @@ pipeline {
 
                 withCredentials([string(credentialsId: 'dockerhub_token', variable: 'DOCKER_TOKEN')]) {
                     sh """
-                    echo "🔐 Logging into Docker Hub..."
-                    echo "${DOCKER_TOKEN}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
-                    
-                    echo "📤 Pushing image..."
-                    docker push ${IMAGE_NAME}:${BUILD_NUMBER}
+                        echo "🔐 Logging into Docker Hub..."
+                        echo "${DOCKER_TOKEN}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
+                        
+                        echo "📤 Pushing image..."
+                        docker push ${IMAGE_NAME}:${BUILD_NUMBER}
                     """
                 }
             }
@@ -77,17 +87,18 @@ pipeline {
         stage('Run Container') {
             steps {
                 echo "🚀 Running container..."
-                sh """
-                echo "🛑 Stopping and removing any existing container..."
-                if [ \$(docker ps -aq -f name=${CONTAINER_NAME}) ]; then
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
-                else
-                    echo "No existing container found. Continuing..."
-                fi
 
-                echo "🚀 Starting new container..."
-                docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${IMAGE_NAME}:${BUILD_NUMBER}
+                sh """
+                    echo "🛑 Stopping and removing any existing container..."
+                    if [ \$(docker ps -aq -f name=${CONTAINER_NAME}) ]; then
+                        docker stop ${CONTAINER_NAME} || true
+                        docker rm ${CONTAINER_NAME} || true
+                    else
+                        echo "No existing container found. Continuing..."
+                    fi
+
+                    echo "🚀 Starting new container..."
+                    docker run -d --name ${CONTAINER_NAME} -p ${port}:${port} ${IMAGE_NAME}:${BUILD_NUMBER}
                 """
             }
         }
@@ -95,7 +106,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed successfully! App running on port 8080."
+            echo "✅ Pipeline completed successfully! App running."
             sh 'docker ps'
         }
         failure {
