@@ -135,8 +135,8 @@ pipeline {
         IMAGE_NAME = "deborahdel/jenkinsbuild2"
         CONTAINER_NAME = "jenkinsdemo-app-container"
         DOCKERHUB_USER = "deborahdel"
-       // # SONARQUBE_HOST = "http://localhost:9000"
-       // # SONARQUBE_TOKEN = credentials('sonarqube_token') // Jenkins credential ID
+        // SONARQUBE_HOST = "http://localhost:9000"
+        // SONARQUBE_TOKEN = credentials('sonarqube_token')
     }
 
     stages {
@@ -170,13 +170,13 @@ pipeline {
                         echo "✔ SonarQube already running."
                     fi
 
-        //             # echo "🔍 Running Maven SonarQube scan..."
-        //            # mvn sonar:sonar -Dsonar.projectKey=${APP_NAME} \
-        //                             #-Dsonar.host.url=${SONARQUBE_HOST} \
-        //                             #-Dsonar.login=${SONARQUBE_TOKEN}
-        //         '''
-        //     }
-        // }
+                    # Uncomment below to run SonarQube scan
+                    # mvn sonar:sonar -Dsonar.projectKey=${APP_NAME} \
+                    #                  -Dsonar.host.url=${SONARQUBE_HOST} \
+                    #                  -Dsonar.login=${SONARQUBE_TOKEN}
+                '''
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
