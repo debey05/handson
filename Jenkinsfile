@@ -135,8 +135,8 @@ pipeline {
         IMAGE_NAME = "deborahdel/jenkinsbuild2"
         CONTAINER_NAME = "jenkinsdemo-app-container"
         DOCKERHUB_USER = "deborahdel"
-       # SONARQUBE_HOST = "http://localhost:9000"
-       # SONARQUBE_TOKEN = credentials('sonarqube_token') // Jenkins credential ID
+       // # SONARQUBE_HOST = "http://localhost:9000"
+       // # SONARQUBE_TOKEN = credentials('sonarqube_token') // Jenkins credential ID
     }
 
     stages {
